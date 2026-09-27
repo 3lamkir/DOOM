@@ -1,0 +1,41 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ Manual-update-of-French-translation, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Show available NDK versions
+        run: ls /usr/local/lib/android/sdk/ndk/ || echo "no ndk dir found"
+
+      - name: Build native code
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: doom-debug-apk
+          path: |
+            **/*.apk
+          if-no-files-found: warn
